@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rafiki's Journey - AI Generated Frames</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #2c1810, #4a2c2a);
+            color: #f4d03f;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            position: relative;
+        }
+        
+        .frame-container {
+            width: 90vw;
+            height: 70vh;
+            position: relative;
+            border: 3px solid #f4d03f;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(244, 208, 63, 0.3);
+            overflow: hidden;
+            background: #1a0f0f;
+        }
+        
+        .frame-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 1s ease-in-out;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: #f4d03f;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            background: #f4d03f;
+            color: #2c1810;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(244, 208, 63, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(244, 208, 63, 0.5);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .episode-info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.4;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        
+        .frame-counter {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .auto-play {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .auto-play input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .story-progress {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="frame-container">
+            <img id="currentFrame" class="frame-image" style="display: none;">
+            <div id="loading" class="loading">🙋‍♂️ Generating Rafiki's Journey...</div>
+            <div id="frameCounter" class="frame-counter">Frame 0</div>
+            <div id="storyProgress" class="story-progress">Initializing...</div>
+            <div id="episodeInfo" class="episode-info">Loading episode script...</div>
+        </div>
+        
+        <div class="controls">
+            <button id="prevBtn" class="btn" disabled>Previous</button>
+            <button id="nextBtn" class="btn" disabled>Next</button>
+            <button id="generateBtn" class="btn">Generate Frame</button>
+        </div>
+        
+        <div class="auto-play">
+            <input type="checkbox" id="autoPlay" checked>
+            <label for="autoPlay">Auto-play every 15 seconds</label>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+        }
+    }
+    </script>
+
+    <script type="module">
+        class RafikiJourney {
+            constructor() {
+                this.frames = [];
+                this.currentIndex = 0;
+                this.episodeScript = null;
+                this.autoPlayInterval = null;
+                this.isGenerating = false;
+                
+                this.initializeElements();
+                this.generateEpisodeScript();
+                this.setupEventListeners();
+            }
+            
+            initializeElements() {
+                this.currentFrameImg = document.getElementById('currentFrame');
+                this.loadingDiv = document.getElementById('loading');
+                this.frameCounter = document.getElementById('frameCounter');
+                this.storyProgress = document.getElementById('storyProgress');
+                this.episodeInfo = document.getElementById('episodeInfo');
+                this.prevBtn = document.getElementById('prevBtn');
+                this.nextBtn = document.getElementById('nextBtn');
+                this.generateBtn = document.getElementById('generateBtn');
+                this.autoPlayCheckbox = document.getElementById('autoPlay');
+            }
+            
+            async generateEpisodeScript() {
+                try {
+                    const completion = await websim.chat.completions.create({
+                        messages: [
+                            {
+                                role: "system",
+                                content: "You are a creative storyteller. Create a detailed episode script for a Rafiki-focused Lion King story. Include 12 key scenes, each with a specific moment, emotion, and visual description. Format as JSON: {scenes: [{scene: string, moment: string, emotion: string, visual: string}]}"
+                            },
+                            {
+                                role: "user",
+                                content: "Create a complete episode script about Rafiki's journey that we can turn into a visual story with 12 scenes"
+                            }
+                        ],
+                        json: true
+                    });
+                    
+                    this.episodeScript = JSON.parse(completion.content);
+                    this.episodeInfo.textContent = this.episodeScript.scenes[0]?.scene || "Episode loaded";
+                    this.storyProgress.textContent = "Ready to generate frames...";
+                    
+                } catch (error) {
+                    console.error('Error generating episode script:', error);
+                    this.episodeScript = {
+                        scenes: [
+                            {scene: "Rafiki's Morning Meditation", moment: "Rafiki begins his day with ancient rituals", emotion: "peaceful", visual: "Rafiki meditating on Pride Rock at sunrise"},
+                            {scene: "The Vision Quest", moment: "Rafiki receives a mystical vision", emotion: "mystical", visual: "Rafiki surrounded by swirling spirits and colors"},
+                            {scene: "Teaching the Cubs", moment: "Rafiki shares wisdom with young lions", emotion: "wise", visual: "Rafiki teaching lion cubs under a baobab tree"},
+                            {scene: "The Healing", moment: "Rafiki uses his staff to heal an injured animal", emotion: "compassionate", visual: "Rafiki performing a healing ritual"},
+                            {scene: "The Council", moment: "Rafiki advises the lion king", emotion: "authoritative", visual: "Rafiki in deep conversation with Mufasa"},
+                            {scene: "The Storm", moment: "Rafiki faces a great storm", emotion: "brave", visual: "Rafiki standing against lightning and rain"},
+                            {scene: "The Discovery", moment: "Rafiki finds a hidden water source", emotion: "excited", visual: "Rafiki discovering an underground spring"},
+                            {scene: "The Celebration", moment: "Rafiki leads a victory dance", emotion: "joyful", visual: "Rafiki dancing with colorful fruits and flowers"},
+                            {scene: "The Farewell", moment: "Rafiki says goodbye to departing friends", emotion: "bittersweet", visual: "Rafiki waving as animals migrate"},
+                            {scene: "The Night Watch", moment: "Rafiki keeps watch over the Pride Lands", emotion: "protective", visual: "Rafiki perched on a cliff under starlight"},
+                            {scene: "The Dream", moment: "Rafiki dreams of ancient times", emotion: "dreamy", visual: "Rafiki sleeping with glowing ancestral spirits above"},
+                            {scene: "The New Dawn", moment: "Rafiki welcomes a new day", emotion: "hopeful", visual: "Rafiki raising his staff to the rising sun"}
+                        ]
+                    };
+                }
+            }
+            
+            async analyzePreviousFrame() {
+                if (this.frames.length === 0) return null;
+                
+                const lastFrameUrl = this.frames[this.frames.length - 1];
+                
+                try {
+                    const completion = await websim.chat.completions.create({
+                        messages: [
+                            {
+                                role: "system",
+                                content: "You are a visual continuity expert. Analyze the previous frame and suggest how to maintain visual consistency in the next frame. Focus on lighting, colors, character positioning, and mood. Respond with JSON: {lighting: string, colorPalette: string[], characterPosition: string, mood: string, nextSceneHint: string}"
+                            },
+                            {
+                                type: "image_url",
+                                image_url: { url: lastFrameUrl }
+                            },
+                            {
+                                role: "user",
+                                content: "Analyze this frame and provide guidance for the next scene to maintain visual continuity"
+                            }
+                        ],
+                        json: true
+                    });
+                    
+                    return JSON.parse(completion.content);
+                } catch (error) {
+                    console.error('Error analyzing frame:', error);
+                    return null;
+                }
+            }
+            
+            async generateNextFrame() {
+                if (this.isGenerating) return;
+                this.isGenerating = true;
+                
+                this.generateBtn.disabled = true;
+                this.loadingDiv.style.display = 'block';
+                this.currentFrameImg.style.display = 'none';
+                
+                const sceneIndex = this.frames.length;
+                const scene = this.episodeScript.scenes[sceneIndex];
+                
+                if (!scene) {
+                    this.isGenerating = false;
+                    this.generateBtn.disabled = false;
+                    return;
+                }
+                
+                const previousAnalysis = await this.analyzePreviousFrame();
+                
+                let prompt = `Cinematic scene from Lion King featuring Rafiki: ${scene.visual}. 
+                              Style: Disney animated movie, vibrant African savanna colors, golden hour lighting. 
+                              Mood: ${scene.emotion}. 
+                              Rafiki: blue-faced mandrill with red mane, holding wooden staff with gourds.`;
+                
+                if (previousAnalysis) {
+                    prompt += ` Maintain visual continuity: ${previousAnalysis.nextSceneHint}. 
+                              Colors: ${previousAnalysis.colorPalette.join(', ')}. 
+                              Lighting: ${previousAnalysis.lighting}`;
+                }
+                
+                try {
+                    const result = await websim.imageGen({
+                        prompt: prompt,
+                        width: 1024,
+                        height: 768,
+                        seed: sceneIndex
+                    });
+                    
+                    this.frames.push(result.url);
+                    this.displayFrame(this.frames.length - 1);
+                    
+                    this.episodeInfo.textContent = scene.scene + " - " + scene.moment;
+                    this.storyProgress.textContent = `Progress: ${this.frames.length}/12 scenes complete`;
+                    
+                } catch (error) {
+                    console.error('Error generating frame:', error);
+                    this.episodeInfo.textContent = "Error generating frame. Please try again.";
+                } finally {
+                    this.isGenerating = false;
+                    this.generateBtn.disabled = false;
+                    this.updateButtonStates();
+                }
+            }
+            
+            displayFrame(index) {
+                if (index < 0 || index >= this.frames.length) return;
+                
+                this.currentIndex = index;
+                this.currentFrameImg.src = this.frames[index];
+                this.currentFrameImg.style.display = 'block';
+                this.loadingDiv.style.display = 'none';
+                
+                this.frameCounter.textContent = `Frame ${index + 1}`;
+                this.updateButtonStates();
+            }
+            
+            updateButtonStates() {
+                this.prevBtn.disabled = this.currentIndex <= 0;
+                this.nextBtn.disabled = this.currentIndex >= this.frames.length - 1;
+                this.generateBtn.disabled = this.frames.length >= 12 || this.isGenerating;
+            }
+            
+            setupEventListeners() {
+                this.prevBtn.addEventListener('click', () => {
+                    this.displayFrame(this.currentIndex - 1);
+                });
+                
+                this.nextBtn.addEventListener('click', () => {
+                    this.displayFrame(this.currentIndex + 1);
+                });
+                
+                this.generateBtn.addEventListener('click', () => {
+                    this.generateNextFrame();
+                });
+                
+                this.autoPlayCheckbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        this.startAutoPlay();
+                    } else {
+                        this.stopAutoPlay();
+                    }
+                });
+                
+                // Auto-generate first frame
+                setTimeout(() => this.generateNextFrame(), 1000);
+            }
+            
+            startAutoPlay() {
+                this.stopAutoPlay();
+                this.autoPlayInterval = setInterval(() => {
+                    if (this.frames.length < 12 && !this.isGenerating) {
+                        this.generateNextFrame();
+                    } else if (this.currentIndex < this.frames.length - 1) {
+                        this.displayFrame(this.currentIndex + 1);
+                    } else {
+                        this.stopAutoPlay();
+                    }
+                }, 15000);
+            }
+            
+            stopAutoPlay() {
+                if (this.autoPlayInterval) {
+                    clearInterval(this.autoPlayInterval);
+                    this.autoPlayInterval = null;
+                }
+            }
+        }
+        
+        // Initialize the Rafiki Journey
+        const journey = new RafikiJourney();
+        
+        // Handle auto-play based on checkbox
+        setTimeout(() => {
+            if (document.getElementById('autoPlay').checked) {
+                journey.startAutoPlay();
+            }
+        }, 2000);
+    </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
+
